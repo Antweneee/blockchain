@@ -1,0 +1,51 @@
+name: Scheduled CD
+
+on:
+  # Triggers the workflow on a cron schedule.
+  # This example runs every day at midnight (UTC).
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (deployment branch)
+        uses: actions/checkout@v2
+        with:
+          # Check out the 'deployment' branch
+          ref: 'deployment'
+
+      - name: Fetch branch to compare (main branch)
+        run: |
+          # Fetch 'main' (or whichever branch you want to compare)
+          git fetch origin main
+
+      - name: Compare deployment vs. main
+        id: compare
+        run: |
+          # Get the latest commit hash of the currently checked out branch (deployment)
+          PROD_COMMIT_HASH=$(git rev-parse HEAD)
+          
+          # Get the latest commit hash of the main branch (from origin)
+          MAIN_COMMIT_HASH=$(git rev-parse origin/main)
+
+          echo "Latest deployment commit: $PROD_COMMIT_HASH"
+          echo "Latest main commit:       $MAIN_COMMIT_HASH"
+
+          # Compare them
+          if [ "$PROD_COMMIT_HASH" = "$MAIN_COMMIT_HASH" ]; then
+            echo "No new commits to deploy. Exiting..."
+            exit 0
+          else
+            echo "deployment is behind main. Proceeding with deployment..."
+          fi
+
+      - name: Deploy
+        if: steps.compare.outputs  # Condition is if compare step didn't exit
+        run: |
+          # Place your deployment commands here.
+          # For example:
+          echo "Running deployment steps..."
+          # e.g., scp/rsync code to a server, run Docker, SSH, etc.
+          # ...
