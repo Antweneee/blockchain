@@ -13,7 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt && pip install gunicorn
 
 COPY backend .
 
-RUN mkdir -p /data /tmp/flask_session
+# Ensure necessary directories exist and are writable
+RUN mkdir -p /data /tmp/flask_session /app/instance && \
+    chmod -R 777 /data /tmp/flask_session /app/instance
 
 ENV FLASK_APP=main.py
 ENV PYTHONPATH=/app
