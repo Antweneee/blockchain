@@ -80,6 +80,7 @@ jobs:
       - name: Remove node_modules
         run: |
           sudo rm -rf xrpl-setup/node_modules
+          sudo rm -rf backend/tests/__pycache__
 
       - name: Revert all uncommitted changes
         if: success()
