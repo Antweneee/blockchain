@@ -1,13 +1,21 @@
+import os
+import sys
 import pytest
 from flask import Flask
-from backend.main import create_app  # Assuming create_app is used to initialize the Flask app
-from backend.models import db, User, Asset
+
+# Add the backend directory to PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+
+from main import create_app  # Assuming create_app is used to initialize the Flask app
+from models import db, User, Asset
 
 @pytest.fixture
 def app():
-    app = create_app({
+    # Ensure create_app supports configuration for testing
+    app = create_app()
+    app.config.update({
         'TESTING': True,
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'
     })
 
     with app.app_context():
@@ -89,17 +97,21 @@ def test_get_assets(client):
     assert isinstance(data, list)
 
 
-def test_get_asset_by_id(client):
+def test_get_asset_by_id(client, auth_headers):
     # Create a dummy asset
-    client.post('/assets', json={
+    response = client.post('/assets', json={
         'title': 'Test Asset',
         'description': 'This is a test asset.',
         'metadata_url': 'http://example.com/metadata.json',
         'transfer_fee': 10
-    })
+    }, headers=auth_headers)
+    assert response.status_code == 201
+
+    # Extract the asset ID from the response
+    asset_id = response.get_json()['asset']['id']
 
     # Get the asset
-    response = client.get('/assets/1')
+    response = client.get(f'/assets/{asset_id}')
     assert response.status_code == 200
     data = response.get_json()
     assert data['title'] == 'Test Asset'
