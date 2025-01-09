@@ -13,9 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt && pip install gunicorn
 
 COPY backend .
 
-# Ensure necessary directories exist and are writable
-RUN mkdir -p /data /tmp/flask_session /app/instance && \
-    chmod -R 777 /data /tmp/flask_session /app/instance
+RUN mkdir -p /data /tmp/flask_session
 
 ENV FLASK_APP=main.py
 ENV PYTHONPATH=/app
@@ -25,3 +23,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--timeout", "60", "main:app", "--log-level", "debug"]
+

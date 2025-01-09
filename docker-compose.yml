@@ -21,7 +21,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./backend:/app:ro
+      - ./backend:/app
       - ./data:/data
       - ./data/uploads:/data/uploads
       - session-data:/tmp/flask_session
