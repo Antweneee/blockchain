@@ -57,12 +57,15 @@ jobs:
           PERMANENT_SESSION_LIFETIME=604800
           SECURE_HEADERS=false
           EOL
+          cat backend/.env
 
       - name: Build and start services
         run: |
           docker compose up -d --build
           # Wait for services to be ready
           sleep 30
+          echo "Capturing logs for the backend container:"
+          docker logs $(docker ps -a --filter "name=blockchain-backend" --format "{{.ID}}")
 
       - name: Run backend tests
         run: |
