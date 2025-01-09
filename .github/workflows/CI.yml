@@ -1,24 +1,73 @@
-name: CI
+name: Development CI/CD
 
 on:
   push:
   pull_request:
+    branches:
+      - dev
 
 jobs:
-  test:
+  build-test-deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/checkout@v3
         with:
-          node-version: 16  # adjust version
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm install
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Run tests
-        run: npm run test
+      - name: Replace production URLs with localhost for testing
+        run: |
+          # Replace in backend files
+          sed -i 's|https://cryptoplace.kusmicrew.cloud|http://localhost:3000|g' backend/routes/upload.py
+          sed -i 's|https://cryptoplace.kusmicrew.cloud/api/uploads/|http://localhost:5000/uploads/|g' backend/routes/assets.py
+          
+          # Replace in frontend files
+          sed -i 's|https://cryptoplace.kusmicrew.cloud/api|http://localhost:5000|g' frontend/src/store/index.js
+          sed -i 's|https://cryptoplace.kusmicrew.cloud/api|http://localhost:5000|g' frontend/.env
+          
+          # Replace in docker-compose.yml
+          sed -i 's|VITE_API_URL=https://cryptoplace.kusmicrew.cloud/api|VITE_API_URL=http://localhost:5000|g' docker-compose.yml
+          
+          # Create test environment file
+          cat > backend/.env << EOL
+          FLASK_ENV=testing
+          DATABASE_PATH=/data/crypto.db
+          SECRET_KEY=test_secret_key_123
+          CORS_ALLOW_ORIGINS=http://localhost:3000
+          CORS_ALLOW_CREDENTIALS=true
+          FLASK_APP=main.py
+          XRPL_NODE=wss://s.altnet.rippletest.net:51233
+          SESSION_TYPE=filesystem
+          SESSION_PERMANENT=true
+          PERMANENT_SESSION_LIFETIME=604800
+          SECURE_HEADERS=false
+          EOL
+
+      - name: Build and start services
+        run: |
+          docker-compose up -d --build
+          # Wait for services to be ready
+          sleep 30
+
+      - name: Run backend tests
+        run: |
+          docker-compose exec -T backend pytest
+
+      - name: Push to main branch
+        if: success()
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git checkout main
+          git merge dev
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v
