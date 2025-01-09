@@ -77,22 +77,11 @@ jobs:
             echo "Error: backend container not found." && exit 1
           fi
 
-      - name: Revert temporary changes
+      - name: Revert all uncommitted changes
         if: success()
         run: |
-          # Revert changes to the backend
-          git checkout -- backend/routes/upload.py
-          git checkout -- backend/routes/assets.py
-
-          # Revert changes to the frontend
-          git checkout -- frontend/src/store/index.js
-          git checkout -- frontend/.env
-
-          # Revert changes to docker-compose.yml
-          git checkout -- docker-compose.yml
-
-          # Clean up test environment file
-          rm -f backend/.env
+          git reset --hard HEAD
+          git clean -fd
 
       - name: Push to main branch
         if: success()
@@ -108,4 +97,8 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker compose down -v
+          docker compose down -v || true
+          if [ -f backend/.env ]; then
+            rm -f backend/.env
+          fi
+
