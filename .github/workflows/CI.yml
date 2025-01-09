@@ -9,7 +9,7 @@ on:
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -19,19 +19,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      # Add these new steps to set up Docker Compose
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
       - name: Replace production URLs with localhost for testing
         run: |
           # Replace in backend files
           sed -i 's|https://cryptoplace.kusmicrew.cloud|http://localhost:3000|g' backend/routes/upload.py
           sed -i 's|https://cryptoplace.kusmicrew.cloud/api/uploads/|http://localhost:5000/uploads/|g' backend/routes/assets.py
-          
+
           # Replace in frontend files
           sed -i 's|https://cryptoplace.kusmicrew.cloud/api|http://localhost:5000|g' frontend/src/store/index.js
           sed -i 's|https://cryptoplace.kusmicrew.cloud/api|http://localhost:5000|g' frontend/.env
-          
+
           # Replace in docker-compose.yml
           sed -i 's|VITE_API_URL=https://cryptoplace.kusmicrew.cloud/api|VITE_API_URL=http://localhost:5000|g' docker-compose.yml
-          
+
           # Create test environment file
           cat > backend/.env << EOL
           FLASK_ENV=testing
@@ -49,13 +56,13 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose up -d --build
+          docker compose up -d --build
           # Wait for services to be ready
           sleep 30
 
       - name: Run backend tests
         run: |
-          docker-compose exec -T backend pytest
+          docker compose exec -T backend pytest
 
       - name: Push to main branch
         if: success()
@@ -70,4 +77,5 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker-compose down -v
+        run: |
+          docker compose down -v
