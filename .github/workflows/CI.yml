@@ -66,7 +66,12 @@ jobs:
 
       - name: Run backend tests
         run: |
-          docker compose exec -T blockchain-backend pytest
+          BACKEND_CONTAINER_ID=$(docker ps --filter "name=blockchain-backend" --format "{{.ID}}")
+          if [ -n "$BACKEND_CONTAINER_ID" ]; then
+            docker exec -T $BACKEND_CONTAINER_ID pytest
+          else
+            echo "Error: blockchain-backend container not found." && exit 1
+          fi
 
       - name: Push to main branch
         if: success()
