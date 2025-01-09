@@ -62,7 +62,8 @@ const navigationItems = [
   { name: 'Dashboard', path: '/dashboard' },
   { name: 'Marketplace', path: '/marketplace' },
   { name: 'Wallet', path: '/wallet' },
-  { name: 'Profile', path: '/profile' }
+  { name: 'Profile', path: '/profile' },
+  { name: 'Help', path: '/help' }
 ]
 
 const logout = async () => {

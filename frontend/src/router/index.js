@@ -6,6 +6,7 @@ import AssetDetailsView from '../views/AssetDetailsView.vue'
 import TokenizeView from '../views/TokenizeView.vue'
 import WalletView from '../views/WalletView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import HelpView from '../views/HelpView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,12 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/help',
+      name: 'help',
+      component: HelpView,
       meta: { requiresAuth: true }
     },
     {
