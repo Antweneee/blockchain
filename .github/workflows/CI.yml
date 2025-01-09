@@ -77,6 +77,10 @@ jobs:
             echo "Error: backend container not found." && exit 1
           fi
 
+      - name: Remove node_modules
+        run: |
+          rm -rf xrpl-setup/node_modules
+
       - name: Revert all uncommitted changes
         if: success()
         run: |
