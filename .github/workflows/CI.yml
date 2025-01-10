@@ -97,8 +97,13 @@ jobs:
           git pull origin main
           git checkout dev -- $(git ls-files | grep -v "^.github/")
           git add .
-          git commit -m "Merge dev into main (excluding .github folder)"
-          git push origin main
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          else
+            git commit -m "Merge dev into main (excluding .github folder)"
+            git push origin main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
